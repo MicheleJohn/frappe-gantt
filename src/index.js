@@ -1351,7 +1351,7 @@ export default class Gantt {
     }
 
     bind_header_click_events() {
-        // Seleziona tutti i testi nell'header (upper e lower)
+        // ✅ Seleziona tutti i testi nell'header (upper e lower)
         const headerTexts = this.$container.querySelectorAll(
             '.upper-text, .lower-text',
         );
@@ -1388,14 +1388,22 @@ export default class Gantt {
                     );
                 });
 
-                // Trigger l'evento personalizzato
-                this.trigger_event('header_click', {
+                // ✅ Costruisci l'evento
+                const eventData = {
                     dateText: textEl.innerText,
                     formattedDate: formattedDate,
                     clickedDate: clickedDate,
                     tasksAtTime: tasksAtTime,
                     element: textEl,
-                });
+                };
+
+                // ✅ Chiama il callback on_header_click se configurato
+                if (this.options.on_header_click) {
+                    this.options.on_header_click.call(this, eventData);
+                }
+
+                // ✅ Trigger l'evento personalizzato (per backward compatibility)
+                this.trigger_event('header_click', eventData);
             });
         });
     }
