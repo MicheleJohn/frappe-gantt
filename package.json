@@ -1,5 +1,5 @@
 {
-    "name": "@michelejohn/frappe-gantt",
+    "name": "@michele_john/frappe-gantt",
     "version": "1.0.4",
     "description": "A simple, modern, interactive gantt library for the web",
     "main": "src/index.js",
