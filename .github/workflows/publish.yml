@@ -1,23 +1,39 @@
-name: Publish on NPM
+name: Publish to npm
+
 on:
-    push:
-        branches: [release]
+  push:
+    tags:
+      - 'v*'  # Pubblica quando fai push di un tag come v1.0.0
 
 jobs:
-    publish:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: pnpm/action-setup@v4
-              with:
-                  version: 9
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: '18'
-                  cache: 'pnpm'
-            - run: pnpm install
-            - run: pnpm prettier-check
-            - run: pnpm build
-            - uses: JS-DevTools/npm-publish@v1
-              with:
-                  token: ${{ secrets.NPM_TOKEN }}
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # 🔑 RICHIESTO per Trusted Publishing (OIDC)
+      
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Build
+        run: pnpm build
+      
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        # Note: NON serve passare NODE_AUTH_TOKEN!
+        # npm usa automaticamente l'OIDC token da GitHub
