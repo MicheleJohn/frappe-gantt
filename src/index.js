@@ -1401,9 +1401,6 @@ export default class Gantt {
                 if (this.options.on_header_click) {
                     this.options.on_header_click.call(this, eventData);
                 }
-
-                // ✅ Trigger l'evento personalizzato (per backward compatibility)
-                this.trigger_event('header_click', eventData);
             });
         });
     }
