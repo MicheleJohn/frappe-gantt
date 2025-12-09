@@ -1351,58 +1351,63 @@ export default class Gantt {
     }
 
     bind_header_click_events() {
-        // ✅ Seleziona tutti i testi nell'header (upper e lower)
+        // ✅ Rimuovi il vecchio listener se esiste (event delegation)
+        if (this._headerClickListener) {
+            this.$container.removeEventListener('click', this._headerClickListener);
+        }
+
+        // ✅ Event delegation: un solo listener al container, aggiunto UNA VOLTA
+        this._headerClickListener = (e) => {
+            const textEl = e.target.closest('.upper-text, .lower-text');
+            if (!textEl) return;
+            
+            e.stopPropagation();
+
+            const classes = textEl.className.split(' ');
+            const dateClass = classes.find((cls) =>
+                cls.startsWith('date_'),
+            );
+
+            if (!dateClass) return;
+
+            const formattedDate = dateClass
+                .replace('date_', '')
+                .replaceAll('_', ' ')
+                .replace(' HH', ':')
+                .replace(' mm', '');
+
+            const clickedDate = date_utils.parse(formattedDate);
+
+            const tasksAtTime = this.tasks.filter((task) => {
+                return (
+                    task._start <= clickedDate && clickedDate < task._end
+                );
+            });
+
+            const eventData = {
+                dateText: textEl.innerText,
+                formattedDate: formattedDate,
+                clickedDate: clickedDate,
+                tasksAtTime: tasksAtTime,
+                element: textEl,
+            };
+
+            if (this.options.on_header_click) {
+                this.options.on_header_click.call(this, eventData);
+            }
+        };
+
+        // ✅ Applica gli stili
         const headerTexts = this.$container.querySelectorAll(
             '.upper-text, .lower-text',
         );
-
         headerTexts.forEach((textEl) => {
             textEl.style.cursor = 'pointer';
             textEl.style.userSelect = 'none';
-
-            textEl.addEventListener('click', (e) => {
-                e.stopPropagation();
-
-                // Estrai la data dalla classe CSS (formato: date_YYYY-MM-DD_HH_mm)
-                const classes = textEl.className.split(' ');
-                const dateClass = classes.find((cls) =>
-                    cls.startsWith('date_'),
-                );
-
-                if (!dateClass) return;
-
-                // Ricostruisci la data dal formato sanitizzato
-                const formattedDate = dateClass
-                    .replace('date_', '')
-                    .replaceAll('_', ' ')
-                    .replace(' HH', ':')
-                    .replace(' mm', '');
-
-                // Parsa la data
-                const clickedDate = date_utils.parse(formattedDate);
-
-                // Trova i task che intercorrono in questa data/ora
-                const tasksAtTime = this.tasks.filter((task) => {
-                    return (
-                        task._start <= clickedDate && clickedDate < task._end
-                    );
-                });
-
-                // ✅ Costruisci l'evento
-                const eventData = {
-                    dateText: textEl.innerText,
-                    formattedDate: formattedDate,
-                    clickedDate: clickedDate,
-                    tasksAtTime: tasksAtTime,
-                    element: textEl,
-                };
-
-                // ✅ Chiama il callback on_header_click se configurato
-                if (this.options.on_header_click) {
-                    this.options.on_header_click.call(this, eventData);
-                }
-            });
         });
+
+        // ✅ Aggiungi il listener UNA VOLTA al container
+        this.$container.addEventListener('click', this._headerClickListener);
     }
 
     bind_bar_progress() {
