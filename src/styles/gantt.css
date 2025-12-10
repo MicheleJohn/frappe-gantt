@@ -323,7 +323,7 @@
     }
 
     & .bar-wrapper {
-            cursor: pointer;
+        cursor: pointer;
 
         & .bar {
             outline: 1px solid var(--g-row-border-color);
@@ -339,37 +339,5 @@
                 display: block;
             }
         }
-    }
-
-    /* Multiple bars styling - NEW */
-    & .bar-solid {
-        fill: #27ae60 !important;
-        stroke: #229954 !important;
-        stroke-width: 1 !important;
-    }
-
-    & .bar-dashed {
-        fill: #3498db !important;
-        stroke: #2980b9 !important;
-        stroke-width: 1.5 !important;
-        stroke-dasharray: 5, 5;
-    }
-
-    & .bar-completed {
-        fill: #95a5a6 !important;
-        stroke: #7f8c8d !important;
-        stroke-width: 1 !important;
-    }
-
-    & .bar.bar-solid .bar-progress {
-        fill: #27ae60 !important;
-    }
-
-    & .bar.bar-dashed .bar-progress {
-        fill: #3498db !important;
-    }
-
-    & .bar.bar-completed .bar-progress {
-        fill: #95a5a6 !important;
     }
 }

@@ -1,438 +1,459 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medical Schedule - Frappe Gantt Multiple Bars Example</title>
-    <link rel="stylesheet" href="../dist/frappe-gantt.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 20px;
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .controls button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            background: white;
-            color: #667eea;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .controls button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .controls button.active {
-            background: #667eea;
-            color: white;
-        }
-
-        #gantt {
-            min-height: 600px;
-            border-radius: 0;
-        }
-
-        .legend {
-            padding: 20px 30px;
-            background: #fafafa;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .legend-title {
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #333;
-        }
-
-        .legend-items {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 3px;
-            border: 1px solid #999;
-        }
-
-        .legend-color.solid {
-            background: #27ae60;
-            border-color: #229954;
-        }
-
-        .legend-color.dashed {
-            background: #3498db;
-            border-color: #2980b9;
-            position: relative;
-        }
-
-        .legend-color.dashed::after {
-            content: '';
-            position: absolute;
-            width: 12px;
-            height: 2px;
-            background: #3498db;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-top: 2px dashed #3498db;
-        }
-
-        .legend-color.completed {
-            background: #95a5a6;
-            border-color: #7f8c8d;
-        }
-
-        .legend-label {
-            font-size: 13px;
-            color: #555;
-        }
-
-        .info-box {
-            padding: 20px 30px;
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            color: #1565c0;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .view-mode-info {
-            text-align: center;
-            padding: 15px;
-            background: #fff3cd;
-            color: #856404;
-            border-bottom: 1px solid #ffc107;
-            font-size: 13px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🏥 Medical Schedule</h1>
-            <p>Multiple Drug Administrations - Interactive Gantt Chart Example</p>
-            <div class="controls">
-                <button class="view-btn active" data-view="day">Day View</button>
-                <button class="view-btn" data-view="hour">Hour View</button>
-                <button class="view-btn" data-view="half_day">Half Day</button>
-            </div>
-        </div>
-
-        <div class="view-mode-info">
-            💡 Use Day view for best experience. Switch views to see how multiple bars adapt to different time scales.
-        </div>
-
-        <div id="gantt"></div>
-
-        <div class="legend">
-            <div class="legend-title">📋 Legend - Bar Types</div>
-            <div class="legend-items">
-                <div class="legend-item">
-                    <div class="legend-color solid"></div>
-                    <div class="legend-label"><strong>Administered</strong> - Medication already given</div>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color dashed"></div>
-                    <div class="legend-label"><strong>Scheduled</strong> - Medication pending administration</div>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color completed"></div>
-                    <div class="legend-label"><strong>Cancelled</strong> - Medication not given</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="info-box">
-            <strong>ℹ️ About This Example:</strong><br>
-            This demonstrates Frappe Gantt's multiple bars per row feature, perfect for healthcare scenarios. Each patient shows multiple medication administrations on a single task row. 
-            You can drag each bar independently, update progress, and view dependencies. Try switching between view modes to see how the chart adapts!
-        </div>
-    </div>
-
-    <script src="../dist/frappe-gantt.js"></script>
-    <script>
-        // Medical Schedule Tasks with Multiple Bars
-        const tasks = [
-            {
-                id: 'patient-1',
-                name: '👤 Patient A - Tachipirina',
-                start: '2025-12-10',
-                duration: '1d',
-                bars: [
-                    {
-                        id: 'dose-morning-1',
-                        start: '2025-12-10 08:00',
-                        duration: '15m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'dose-noon-1',
-                        start: '2025-12-10 12:00',
-                        duration: '15m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'dose-evening-1',
-                        start: '2025-12-10 18:00',
-                        duration: '15m',
-                        progress: 50,
-                        class: 'bar-dashed'
-                    },
-                    {
-                        id: 'dose-night-1',
-                        start: '2025-12-10 22:00',
-                        duration: '15m',
-                        progress: 0,
-                        class: 'bar-dashed'
-                    }
-                ]
-            },
-            {
-                id: 'patient-2',
-                name: '👤 Patient B - Aspirin',
-                start: '2025-12-10',
-                duration: '1d',
-                bars: [
-                    {
-                        id: 'aspirin-1',
-                        start: '2025-12-10 08:30',
-                        duration: '10m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'aspirin-2',
-                        start: '2025-12-10 14:00',
-                        duration: '10m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'aspirin-3',
-                        start: '2025-12-10 20:00',
-                        duration: '10m',
-                        progress: 0,
-                        class: 'bar-dashed'
-                    }
-                ]
-            },
-            {
-                id: 'patient-3',
-                name: '👤 Patient C - Insulin Therapy',
-                start: '2025-12-10',
-                duration: '1d',
-                bars: [
-                    {
-                        id: 'insulin-session-1',
-                        start: '2025-12-10 09:00',
-                        duration: '1h',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'insulin-session-2',
-                        start: '2025-12-10 16:00',
-                        duration: '1h',
-                        progress: 75,
-                        class: 'bar-dashed'
-                    }
-                ]
-            },
-            {
-                id: 'patient-4',
-                name: '👤 Patient D - Antibiotics',
-                start: '2025-12-10',
-                duration: '1d',
-                dependencies: ['patient-1'],
-                bars: [
-                    {
-                        id: 'antibiotic-1',
-                        start: '2025-12-10 09:00',
-                        duration: '30m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'antibiotic-2',
-                        start: '2025-12-10 13:00',
-                        duration: '30m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'antibiotic-3',
-                        start: '2025-12-10 19:00',
-                        duration: '30m',
-                        progress: 0,
-                        class: 'bar-dashed'
-                    }
-                ]
-            },
-            {
-                id: 'patient-5',
-                name: '👤 Patient E - Vitamin D Supplements',
-                start: '2025-12-10',
-                duration: '1d',
-                bars: [
-                    {
-                        id: 'vitamin-1',
-                        start: '2025-12-10 08:15',
-                        duration: '5m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'vitamin-2',
-                        start: '2025-12-10 12:30',
-                        duration: '5m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'vitamin-3',
-                        start: '2025-12-10 18:45',
-                        duration: '5m',
-                        progress: 50,
-                        class: 'bar-dashed'
-                    }
-                ]
-            },
-            {
-                id: 'patient-6',
-                name: '👤 Patient F - Blood Work',
-                start: '2025-12-10',
-                duration: '1d',
-                bars: [
-                    {
-                        id: 'bloodwork-morning',
-                        start: '2025-12-10 08:00',
-                        duration: '30m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'bloodwork-afternoon',
-                        start: '2025-12-10 15:00',
-                        duration: '30m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    }
-                ]
-            },
-            {
-                id: 'patient-7',
-                name: '👤 Patient G - Physical Therapy',
-                start: '2025-12-10',
-                duration: '1d',
-                bars: [
-                    {
-                        id: 'therapy-session-1',
-                        start: '2025-12-10 10:00',
-                        duration: '45m',
-                        progress: 100,
-                        class: 'bar-solid'
-                    },
-                    {
-                        id: 'therapy-session-2',
-                        start: '2025-12-10 15:00',
-                        duration: '45m',
-                        progress: 30,
-                        class: 'bar-dashed'
-                    }
-                ]
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Medical Schedule - Frappe Gantt Multiple Bars Example</title>
+        <link rel="stylesheet" href="../dist/frappe-gantt.css" />
+        <script src="../dist/frappe-gantt.umd.js"></script>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
             }
-        ];
 
-        // Initialize Gantt
-        const gantt = new Gantt(
-            '#gantt',
-            tasks,
-            {
-                view_modes: ['Hour', 'Day', 'Half Day', 'Week'],
-                view_mode: 'Day',
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                    Roboto, sans-serif;
+                background: #f5f5f5;
+                padding: 20px;
+            }
+
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+
+            .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 30px;
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 28px;
+                margin-bottom: 8px;
+            }
+
+            .header p {
+                font-size: 14px;
+                opacity: 0.9;
+                margin-bottom: 20px;
+            }
+
+            .controls {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .controls button {
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                background: white;
+                color: #667eea;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .controls button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            .controls button.active {
+                background: #667eea;
+                color: white;
+            }
+
+            #gantt {
+                min-height: 600px;
+                border-radius: 0;
+            }
+
+            .legend {
+                padding: 20px 30px;
+                background: #fafafa;
+                border-top: 1px solid #e0e0e0;
+            }
+
+            .legend-title {
+                font-weight: 600;
+                margin-bottom: 12px;
+                color: #333;
+            }
+
+            .legend-items {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .legend-color {
+                width: 20px;
+                height: 20px;
+                border-radius: 3px;
+                border: 1px solid #999;
+            }
+
+            .legend-color.solid {
+                background: #27ae60;
+                border-color: #229954;
+            }
+
+            .legend-color.dashed {
+                background: #3498db;
+                border-color: #2980b9;
+                position: relative;
+            }
+
+            .legend-color.dashed::after {
+                content: '';
+                position: absolute;
+                width: 12px;
+                height: 2px;
+                background: #3498db;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                border-top: 2px dashed #3498db;
+            }
+
+            .legend-color.completed {
+                background: #95a5a6;
+                border-color: #7f8c8d;
+            }
+
+            .legend-label {
+                font-size: 13px;
+                color: #555;
+            }
+
+            .info-box {
+                padding: 20px 30px;
+                background: #e3f2fd;
+                border-left: 4px solid #2196f3;
+                color: #1565c0;
+                font-size: 13px;
+                line-height: 1.6;
+            }
+
+            .view-mode-info {
+                text-align: center;
+                padding: 15px;
+                background: #fff3cd;
+                color: #856404;
+                border-bottom: 1px solid #ffc107;
+                font-size: 13px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🏥 Medical Schedule</h1>
+                <p>
+                    Multiple Drug Administrations - Interactive Gantt Chart
+                    Example
+                </p>
+                <div class="controls">
+                    <button class="view-btn active" data-view="day">
+                        Day View
+                    </button>
+                    <button class="view-btn" data-view="hour">Hour View</button>
+                    <button class="view-btn" data-view="half_day">
+                        Half Day
+                    </button>
+                </div>
+            </div>
+
+            <div class="view-mode-info">
+                💡 Use Day view for best experience. Switch views to see how
+                multiple bars adapt to different time scales.
+            </div>
+
+            <div id="gantt"></div>
+
+            <div class="legend">
+                <div class="legend-title">📋 Legend - Bar Types</div>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="legend-color solid"></div>
+                        <div class="legend-label">
+                            <strong>Administered</strong> - Medication already
+                            given
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color dashed"></div>
+                        <div class="legend-label">
+                            <strong>Scheduled</strong> - Medication pending
+                            administration
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color completed"></div>
+                        <div class="legend-label">
+                            <strong>Cancelled</strong> - Medication not given
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>ℹ️ About This Example:</strong><br />
+                This demonstrates Frappe Gantt's multiple bars per row feature,
+                perfect for healthcare scenarios. Each patient shows multiple
+                medication administrations on a single task row. You can drag
+                each bar independently, update progress, and view dependencies.
+                Try switching between view modes to see how the chart adapts!
+            </div>
+        </div>
+
+        <script src="../dist/frappe-gantt.js"></script>
+        <script>
+            // Medical Schedule Tasks with Multiple Bars
+            const tasks = [
+                {
+                    id: 'patient-1',
+                    name: '👤 Patient A - Tachipirina',
+                    start: '2025-12-10',
+                    duration: '0d',
+                    bars: [
+                        {
+                            id: 'dose-morning-1',
+                            start: '2025-12-10 08:00',
+                            end: '2025-12-10 11:00',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'dose-noon-1',
+                            start: '2025-12-10 15:00',
+                            end: '2025-12-10 16:00',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'dose-evening-1',
+                            start: '2025-12-10 18:00',
+                            end: '2025-12-10 19:30',
+                            progress: 50,
+                            class: 'bar-dashed',
+                        },
+                        {
+                            id: 'dose-night-1',
+                            start: '2025-12-10 22:00',
+                            end: '2025-12-10 23:15',
+                            progress: 0,
+                            class: 'bar-dashed',
+                        },
+                    ],
+                },
+                {
+                    id: 'patient-2',
+                    name: '👤 Patient B - Aspirin',
+                    start: '2025-12-10',
+                    duration: '1d',
+                    bars: [
+                        {
+                            id: 'aspirin-1',
+                            start: '2025-12-10 08:30',
+                            duration: '10m',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'aspirin-2',
+                            start: '2025-12-10 14:00',
+                            duration: '10m',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'aspirin-3',
+                            start: '2025-12-10 20:00',
+                            duration: '10m',
+                            progress: 0,
+                            class: 'bar-dashed',
+                        },
+                    ],
+                },
+                {
+                    id: 'patient-3',
+                    name: '👤 Patient C - Insulin Therapy',
+                    start: '2025-12-10',
+                    duration: '1d',
+                    bars: [
+                        {
+                            id: 'insulin-session-1',
+                            start: '2025-12-10 09:00',
+                            duration: '1h',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'insulin-session-2',
+                            start: '2025-12-10 16:00',
+                            duration: '1h',
+                            progress: 75,
+                            class: 'bar-dashed',
+                        },
+                    ],
+                },
+                {
+                    id: 'patient-4',
+                    name: '👤 Patient D - Antibiotics',
+                    start: '2025-12-10',
+                    duration: '1d',
+                    dependencies: ['patient-1'],
+                    bars: [
+                        {
+                            id: 'antibiotic-1',
+                            start: '2025-12-10 09:00',
+                            duration: '30m',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'antibiotic-2',
+                            start: '2025-12-10 13:00',
+                            duration: '30m',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'antibiotic-3',
+                            start: '2025-12-10 19:00',
+                            duration: '30m',
+                            progress: 0,
+                            class: 'bar-dashed',
+                        },
+                    ],
+                },
+                {
+                    id: 'patient-5',
+                    name: '👤 Patient E - Vitamin D Supplements',
+                    start: '2025-12-10',
+                    duration: '1d',
+                    bars: [
+                        {
+                            id: 'vitamin-1',
+                            start: '2025-12-10 08:15',
+                            duration: '5m',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'vitamin-2',
+                            start: '2025-12-10 12:30',
+                            duration: '5m',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'vitamin-3',
+                            start: '2025-12-10 18:45',
+                            duration: '5m',
+                            progress: 50,
+                            class: 'bar-dashed',
+                        },
+                    ],
+                },
+                {
+                    id: 'patient-6',
+                    name: '👤 Patient F - Blood Work',
+                    start: '2025-12-10',
+                    duration: '1d',
+                    bars: [
+                        {
+                            id: 'bloodwork-morning',
+                            start: '2025-12-10 08:00',
+                            duration: '30m',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'bloodwork-afternoon',
+                            start: '2025-12-10 15:00',
+                            duration: '30m',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                    ],
+                },
+                {
+                    id: 'patient-7',
+                    name: '👤 Patient G - Physical Therapy',
+                    start: '2025-12-10',
+                    duration: '1d',
+                    bars: [
+                        {
+                            id: 'therapy-session-1',
+                            start: '2025-12-10 10:00',
+                            duration: '45m',
+                            progress: 100,
+                            class: 'bar-solid',
+                        },
+                        {
+                            id: 'therapy-session-2',
+                            start: '2025-12-10 15:00',
+                            duration: '45m',
+                            progress: 30,
+                            class: 'bar-dashed',
+                        },
+                    ],
+                },
+            ];
+
+            // Initialize Gantt
+            const gantt = new Gantt('#gantt', tasks, {
+                view_mode: 'Hour',
                 column_width: 45,
                 bar_height: 35,
                 bar_corner_radius: 3,
                 arrow_curve: 5,
                 padding: 18,
-                view_mode_select: false,
+                view_mode_select: true,
                 today_button: true,
                 custom_popup_html: null,
                 language: 'en',
                 scroll_to: 'start',
-            }
-        );
-
-        // View Mode Switching
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                gantt.change_view_mode(e.target.dataset.view);
             });
-        });
 
-        // Log interactions
-        console.log('✅ Medical Schedule Gantt initialized');
-        console.log('📊 Total patients:', tasks.length);
-        console.log('💊 Total medication schedules:', tasks.reduce((sum, t) => sum + (t.bars?.length || 1), 0));
-    </script>
-</body>
+            // View Mode Switching
+            document.querySelectorAll('.view-btn').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    document
+                        .querySelectorAll('.view-btn')
+                        .forEach((b) => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    gantt.change_view_mode(e.target.dataset.view);
+                });
+            });
+
+            // Log interactions
+            console.log('✅ Medical Schedule Gantt initialized');
+            console.log('📊 Total patients:', tasks.length);
+            console.log(
+                '💊 Total medication schedules:',
+                tasks.reduce((sum, t) => sum + (t.bars?.length || 1), 0),
+            );
+        </script>
+    </body>
 </html>
