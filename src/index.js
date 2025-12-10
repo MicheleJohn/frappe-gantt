@@ -871,10 +871,28 @@ export default class Gantt {
     }
 
     make_bars() {
-        this.bars = this.tasks.map((task) => {
-            const bar = new Bar(this, task);
-            this.layers.bar.appendChild(bar.group);
-            return bar;
+        this.bars = [];
+        this.tasks.forEach((task) => {
+            // Se il task ha multiple bars, renderizza ognuno
+            if (task.bars && Array.isArray(task.bars) && task.bars.length > 0) {
+                task.bars.forEach((barData, index) => {
+                    const mergedTask = {
+                        ...task,
+                        ...barData,
+                        _parent_task: task,
+                        _bar_index: index,
+                    };
+                    
+                    const bar = new Bar(this, mergedTask);
+                    this.layers.bar.appendChild(bar.group);
+                    this.bars.push(bar);
+                });
+            } else {
+                // Rendering standard (single bar)
+                const bar = new Bar(this, task);
+                this.layers.bar.appendChild(bar.group);
+                this.bars.push(bar);
+            }
         });
     }
 
@@ -886,28 +904,50 @@ export default class Gantt {
                 .map((task_id) => {
                     const dependency = this.get_task(task_id);
                     if (!dependency) return;
-                    const arrow = new Arrow(
-                        this,
-                        this.bars[dependency._index], // from_task
-                        this.bars[task._index], // to_task
-                    );
+                    
+                    // Get the last bar of the dependency task (for multiple bars)
+                    const from_bar = this.get_last_bar_for_task(dependency._index);
+                    // Get the first bar of the current task (for multiple bars)
+                    const to_bar = this.get_first_bar_for_task(task._index);
+                    
+                    if (!from_bar || !to_bar) return;
+                    
+                    const arrow = new Arrow(this, from_bar, to_bar);
                     this.layers.arrow.appendChild(arrow.element);
                     return arrow;
                 })
-                .filter(Boolean); // filter falsy values
+                .filter(Boolean);
             this.arrows = this.arrows.concat(arrows);
         }
     }
 
     map_arrows_on_bars() {
         for (let bar of this.bars) {
+            const task_id = bar.task._parent_task ? bar.task._parent_task.id : bar.task.id;
             bar.arrows = this.arrows.filter((arrow) => {
                 return (
-                    arrow.from_task.task.id === bar.task.id ||
-                    arrow.to_task.task.id === bar.task.id
+                    (arrow.from_task.task._parent_task ? arrow.from_task.task._parent_task.id : arrow.from_task.task.id) === task_id ||
+                    (arrow.to_task.task._parent_task ? arrow.to_task.task._parent_task.id : arrow.to_task.task.id) === task_id
                 );
             });
         }
+    }
+
+    get_last_bar_for_task(task_index) {
+        return this.bars
+            .filter((bar) => {
+                const bar_task_index = bar.task._parent_task ? bar.task._parent_task._index : bar.task._index;
+                return bar_task_index === task_index;
+            })
+            .pop() || null;
+    }
+
+    get_first_bar_for_task(task_index) {
+        return this.bars
+            .find((bar) => {
+                const bar_task_index = bar.task._parent_task ? bar.task._parent_task._index : bar.task._index;
+                return bar_task_index === task_index;
+            }) || null;
     }
 
     set_dimensions() {
