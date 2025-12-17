@@ -1418,17 +1418,37 @@ export default class Gantt {
 
             const clickedDate = date_utils.parse(formattedDate);
 
-            const tasksAtTime = this.tasks.filter((task) => {
-                return (
-                    task._start <= clickedDate && clickedDate < task._end
-                );
+            // ✅ FIX: Get bars that intersect the clicked time, excluding phantom tasks with duration 0d
+            const barsAtTime = this.bars.filter((bar) => {
+                const barStart = bar.task._start || date_utils.parse(bar.task.start);
+                const barEnd = bar.task._end || date_utils.parse(bar.task.end);
+                // Exclude phantom parent tasks (0 duration with child bars)
+                if (bar.task._parent_task) {
+                    // This is a child bar, include it
+                    return barStart <= clickedDate && clickedDate < barEnd;
+                }
+                // For non-parent tasks, check if it has child bars
+                if (bar.task.bars && bar.task.bars.length > 0) {
+                    // This is a phantom parent task, exclude it
+                    return false;
+                }
+                // Regular task, include it
+                return barStart <= clickedDate && clickedDate < barEnd;
             });
+
+            // Get parent tasks for context (only those with child bars intersecting the time)
+            const parentTasksAtTime = [...new Set(barsAtTime
+                .map(bar => bar.task._parent_task)
+                .filter(Boolean))];
 
             const eventData = {
                 dateText: textEl.innerText,
                 formattedDate: formattedDate,
                 clickedDate: clickedDate,
-                tasksAtTime: tasksAtTime,
+                barsAtTime: barsAtTime,
+                bars: barsAtTime, // Alias for compatibility
+                parentTasksAtTime: parentTasksAtTime,
+                tasksAtTime: barsAtTime.map(bar => bar.task._parent_task || bar.task),
                 element: textEl,
             };
 
