@@ -27,6 +27,9 @@
             "style": "./dist/frappe-gantt.css"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "keywords": [
         "gantt",
         "svg",
